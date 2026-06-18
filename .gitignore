@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# WhisperChat agent runtime config (written per-session, contains live token)
+agents/*/.mcp.json
+agents/*/.claude/settings.local.json

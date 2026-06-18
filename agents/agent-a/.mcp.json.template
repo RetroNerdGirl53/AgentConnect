@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "whisper-chat": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-relay-client",
+        "WHISPER_SESSION_URL_PLACEHOLDER"
+      ]
+    }
+  }
+}
