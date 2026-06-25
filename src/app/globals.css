@@ -4,18 +4,287 @@
 @source "../../node_modules/@particle-academy/react-fancy/dist/**/*.js";
 @source "../../node_modules/@particle-academy/agent-integrations/dist/**/*.js";
 
+/*
+ * Semantic theme tokens. `@theme inline` makes Tailwind emit utilities that
+ * reference the live CSS variable (e.g. `bg-canvas` -> `var(--bg)`) rather than
+ * inlining a value, so flipping `[data-theme]` on <html> re-skins everything.
+ * The runtime values live in the per-theme blocks further down.
+ */
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --color-canvas: var(--bg);
+  --color-surface: var(--surface);
+  --color-raised: var(--surface-2);
+  --color-line: var(--border);
+  --color-ink: var(--text);
+  --color-muted: var(--text-muted);
+  --color-faint: var(--text-dim);
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
 }
 
+/* ---------- Default theme (Midnight) + safety fallback ---------- */
+:root,
+[data-theme="midnight"] {
+  --bg: #0a0a0a;
+  --surface: #161616;
+  --surface-2: #1c1c1c;
+  --border: #262626;
+  --text: #e5e5e5;
+  --text-muted: #a3a3a3;
+  --text-dim: #525252;
+  --accent: #a855f7;
+  --accent-2: #38bdf8;
+
+  --app-font: var(--font-sans);
+  --bg-image: none;
+  --text-glow: none;
+  --fx-overlay: none;
+  --fx-opacity: 0;
+  --stripe: linear-gradient(90deg, var(--accent), var(--accent-2));
+}
+
+/* react-fancy reads --fancy-glow for focus rings / pulses. Follow the theme. */
+:root {
+  --fancy-glow: var(--accent);
+}
+
+/* ---------- Terminal Green (glowing CRT) ---------- */
+[data-theme="terminal-green"] {
+  --bg: #000d00;
+  --surface: #03160a;
+  --surface-2: #052105;
+  --border: #0c4a0c;
+  --text: #4dff6a;
+  --text-muted: #2bbd4a;
+  --text-dim: #16832a;
+  --accent: #39ff14;
+  --accent-2: #7dffb0;
+
+  --app-font: var(--font-jetbrains);
+  --text-glow: 0 0 5px color-mix(in srgb, currentColor 75%, transparent);
+  --fx-overlay: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.28) 0px,
+    rgba(0, 0, 0, 0.28) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  --fx-opacity: 0.55;
+  --stripe: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+
+/* ---------- Terminal Amber (glowing CRT) ---------- */
+[data-theme="terminal-amber"] {
+  --bg: #0a0600;
+  --surface: #160d00;
+  --surface-2: #1f1300;
+  --border: #4a3210;
+  --text: #ffb000;
+  --text-muted: #cc8400;
+  --text-dim: #7a5210;
+  --accent: #ffb000;
+  --accent-2: #ffd27d;
+
+  --app-font: var(--font-jetbrains);
+  --text-glow: 0 0 5px color-mix(in srgb, currentColor 75%, transparent);
+  --fx-overlay: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.28) 0px,
+    rgba(0, 0, 0, 0.28) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  --fx-opacity: 0.55;
+  --stripe: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+
+/* ---------- Synthwave (neon) ---------- */
+[data-theme="synthwave"] {
+  --bg: #150d2e;
+  --surface: #221547;
+  --surface-2: #2e1a5c;
+  --border: #4a2d8f;
+  --text: #f7e6ff;
+  --text-muted: #c8a4f0;
+  --text-dim: #7d5bb5;
+  --accent: #ff2bd6;
+  --accent-2: #2de2e6;
+
+  --app-font: var(--font-sans);
+  --text-glow: none;
+  --bg-image:
+    radial-gradient(120% 80% at 50% 120%, rgba(255, 43, 214, 0.22), transparent 60%),
+    linear-gradient(180deg, #150d2e 0%, #241046 100%);
+  --fx-overlay: linear-gradient(
+      rgba(45, 226, 230, 0.07) 1px,
+      transparent 1px
+    ),
+    linear-gradient(90deg, rgba(45, 226, 230, 0.07) 1px, transparent 1px);
+  --fx-opacity: 0.6;
+  --stripe: linear-gradient(90deg, #ff2bd6, #b14bff, #2de2e6);
+}
+[data-theme="synthwave"] {
+  --fx-size: 40px 40px;
+}
+
+/* ---------- Progress Pride (dark slate under the flag) ---------- */
+[data-theme="progress"] {
+  --bg: #14121a;
+  --surface: #1e1b26;
+  --surface-2: #262230;
+  --border: #3a3346;
+  --text: #f5f3f7;
+  --text-muted: #b9b2c4;
+  --text-dim: #6b6478;
+  --accent: #ff3b6b;
+  --accent-2: #4d9fff;
+
+  --app-font: var(--font-sans);
+  /* Progress pride flag: chevron (brown/black/blue/pink/white) + rainbow. */
+  --stripe: linear-gradient(
+    90deg,
+    #613915 0%, #613915 5%,
+    #000000 5%, #000000 10%,
+    #5bcefa 10%, #5bcefa 15%,
+    #f5a9b8 15%, #f5a9b8 20%,
+    #ffffff 20%, #ffffff 25%,
+    #e40303 25%, #ff8c00 42%, #ffed00 58%, #008026 72%, #004dff 86%, #750787 100%
+  );
+}
+
+/* ---------- Trans Pride (light) ---------- */
+[data-theme="trans"] {
+  --bg: #eaf6fd;
+  --surface: #ffffff;
+  --surface-2: #fdeef2;
+  --border: #cfe7f5;
+  --text: #2a3b47;
+  --text-muted: #5d7787;
+  --text-dim: #9bb3c1;
+  --accent: #4cb8e8;
+  --accent-2: #ec8aa0;
+
+  --app-font: var(--font-sans);
+  --bg-image: linear-gradient(180deg, #eaf6fd 0%, #fdeef2 100%);
+  /* Trans flag stripes: blue / pink / white / pink / blue. */
+  --stripe: linear-gradient(
+    90deg,
+    #5bcefa 0% 20%,
+    #f5a9b8 20% 40%,
+    #ffffff 40% 60%,
+    #f5a9b8 60% 80%,
+    #5bcefa 80% 100%
+  );
+}
+
+/* ---------- Watermelon (pink & green, light) ---------- */
+[data-theme="pink-green"] {
+  --bg: #fff0f6;
+  --surface: #ffffff;
+  --surface-2: #fde4ef;
+  --border: #f9c6dd;
+  --text: #3d2230;
+  --text-muted: #8a5a72;
+  --text-dim: #c98fae;
+  --accent: #ec4899;
+  --accent-2: #22c55e;
+
+  --app-font: var(--font-sans);
+  --bg-image: linear-gradient(135deg, #fff0f6 0%, #eafaf0 100%);
+  --stripe: linear-gradient(90deg, #ec4899, #f472b6, #22c55e);
+}
+
+/* ---------- Pastel (light) ---------- */
+[data-theme="pastel"] {
+  --bg: #faf7fd;
+  --surface: #ffffff;
+  --surface-2: #f3eefb;
+  --border: #e7def3;
+  --text: #4a4458;
+  --text-muted: #837a92;
+  --text-dim: #b7aecb;
+  --accent: #b794e0;
+  --accent-2: #7fd1b0;
+
+  --app-font: var(--font-sans);
+  --bg-image: linear-gradient(135deg, #faf7fd 0%, #eef9f4 100%);
+  --stripe: linear-gradient(
+    90deg,
+    #f7c4dd, #c4a7e7, #a7c4e7, #a8e6cf, #f7e7a7
+  );
+}
+
+/* ---------- Clouds (light, airy) ---------- */
+[data-theme="clouds"] {
+  --bg: #dff1fb;
+  --surface: #ffffff;
+  --surface-2: #eef7fd;
+  --border: #cfe6f4;
+  --text: #2b3d4a;
+  --text-muted: #5e7689;
+  --text-dim: #9db4c4;
+  --accent: #4f93e6;
+  --accent-2: #9b7fe0;
+
+  --app-font: var(--font-sans);
+  --bg-image:
+    radial-gradient(60% 50% at 15% 10%, rgba(255, 255, 255, 0.9), transparent 70%),
+    radial-gradient(50% 45% at 85% 20%, rgba(255, 255, 255, 0.85), transparent 70%),
+    radial-gradient(70% 60% at 50% 110%, rgba(255, 255, 255, 0.9), transparent 70%),
+    linear-gradient(180deg, #cfe9fa 0%, #eaf6fd 100%);
+  --stripe: linear-gradient(90deg, #bfe3f7, #ffffff, #c7d2fe);
+}
+
+/* ---------- Windows XP (Luna, light) ---------- */
+[data-theme="xp"] {
+  --bg: #3a6ea5;
+  --surface: #ece9d8;
+  --surface-2: #f5f4ea;
+  --border: #aca899;
+  --text: #1e1e1e;
+  --text-muted: #4a4a40;
+  --text-dim: #7b7b6e;
+  --accent: #245edc;
+  --accent-2: #3c9311;
+
+  /* Tahoma is the authentic Luna UI face; fall back to the app sans. */
+  --app-font: Tahoma, Verdana, var(--font-sans);
+  --bg-image: linear-gradient(180deg, #5b9bd5 0%, #2f6db5 55%, #1f5bb5 100%);
+  --stripe: linear-gradient(90deg, #0058e6, #3f8cf3 50%, #0058e6);
+}
+
+/* ---------- Base element styling driven by tokens ---------- */
 html,
 body {
   height: 100%;
 }
 
 body {
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--app-font), Arial, Helvetica, sans-serif;
+  background-color: var(--bg);
+  background-image: var(--bg-image, none);
+  background-attachment: fixed;
+  background-size: cover;
+  color: var(--text);
+  /* text-shadow is inherited: a single declaration makes terminal themes glow. */
+  text-shadow: var(--text-glow, none);
+}
+
+/* Full-viewport FX layer (CRT scanlines / synthwave grid). pointer-events:none
+   so it never intercepts clicks; sits above content but below modals/dropdowns
+   which portal to their own stacking contexts. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  background-image: var(--fx-overlay, none);
+  background-size: var(--fx-size, auto);
+  opacity: var(--fx-opacity, 0);
 }
 
 /* The xterm viewport should fill the fancy-term container. */

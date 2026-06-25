@@ -11,7 +11,7 @@ import dynamic from "next/dynamic";
 const WhisperChat = dynamic(() => import("./WhisperChat").then((m) => m.WhisperChat), {
   ssr: false,
   loading: () => (
-    <div className="flex h-dvh items-center justify-center bg-neutral-950 text-sm text-neutral-500">
+    <div className="flex h-dvh items-center justify-center bg-canvas text-sm text-faint">
       Starting WhisperChat…
     </div>
   ),

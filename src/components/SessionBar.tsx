@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { Badge, Button } from "@particle-academy/react-fancy";
+import { ThemeSwitcher } from "./ThemeSwitcher";
+import { Kbd, MOD, useShortcuts } from "./CommandCenter";
 
 export type SessionBarProps = {
   relayReady: boolean;
@@ -12,6 +14,7 @@ export type SessionBarProps = {
 
 export function SessionBar({ relayReady, peerCount, agentUrls, onReset }: SessionBarProps) {
   const [copied, setCopied] = useState<string | null>(null);
+  const { openPalette, openHelp } = useShortcuts();
 
   const copy = async (id: string, url: string) => {
     try {
@@ -24,10 +27,10 @@ export function SessionBar({ relayReady, peerCount, agentUrls, onReset }: Sessio
   };
 
   return (
-    <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-neutral-800 bg-neutral-900/60 px-4 py-2.5">
+    <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line bg-surface/80 px-4 py-2.5 backdrop-blur-sm">
       <div className="flex items-center gap-2">
-        <span className="text-sm font-semibold tracking-tight text-neutral-100">WhisperChat</span>
-        <span className="text-xs text-neutral-500">cross-agent MCP bridge</span>
+        <span className="text-sm font-semibold tracking-tight text-ink">WhisperChat</span>
+        <span className="text-xs text-faint">cross-agent MCP bridge</span>
       </div>
 
       <div className="flex items-center gap-2">
@@ -55,6 +58,31 @@ export function SessionBar({ relayReady, peerCount, agentUrls, onReset }: Sessio
         <Button size="sm" variant="ghost" warn onClick={onReset}>
           Reset
         </Button>
+
+        <button
+          type="button"
+          onClick={openPalette}
+          title="Command palette"
+          className="flex items-center gap-1.5 rounded-md border border-line bg-raised/70 px-2 py-1.5 text-xs text-muted transition-colors hover:bg-raised hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+        >
+          <span className="hidden sm:inline">Search</span>
+          <span className="flex items-center gap-1">
+            <Kbd>{MOD}</Kbd>
+            <Kbd>K</Kbd>
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={openHelp}
+          title={`Keyboard shortcuts (${MOD} /)`}
+          aria-label="Keyboard shortcuts"
+          className="flex h-7 w-7 items-center justify-center rounded-md border border-line bg-raised/70 text-sm text-muted transition-colors hover:bg-raised hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+        >
+          ?
+        </button>
+
+        <ThemeSwitcher />
       </div>
     </header>
   );

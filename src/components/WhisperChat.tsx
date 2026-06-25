@@ -10,7 +10,9 @@ import {
 import { createWhisperServer } from "@/lib/mcp/createWhisperServer";
 import { WhisperStore } from "@/lib/mcp/whisperState";
 import { buildAgentRelayUrl, registerSession, relayBaseUrl } from "@/lib/session";
+import { ThemeProvider } from "@/lib/theme/ThemeProvider";
 import { AgentPanel } from "./AgentPanel";
+import { ShortcutsProvider } from "./CommandCenter";
 import { SessionBar } from "./SessionBar";
 import { WhisperLog } from "./WhisperLog";
 
@@ -95,28 +97,35 @@ export function WhisperChat() {
   const peerIds = new Set(peers.map((p) => p.id));
 
   return (
-    <div className="flex h-dvh flex-col bg-neutral-950 text-neutral-200">
-      <SessionBar
-        relayReady={relayReady}
-        peerCount={peers.length}
-        agentUrls={AGENTS.map((a) => ({ id: a.id, label: a.label.split(" ")[1] ?? a.id, url: agentUrls[a.id] ?? "" }))}
-        onReset={handleReset}
-      />
+    <ThemeProvider>
+      <ShortcutsProvider onReset={handleReset}>
+        <div className="flex h-dvh flex-col text-ink">
+          {/* Theme accent / flag stripe — the showcase for the pride & flag themes. */}
+          <div className="h-1 w-full shrink-0" style={{ background: "var(--stripe)" }} />
 
-      <main className="flex min-h-0 flex-1 divide-x divide-neutral-800">
-        {AGENTS.map((a) => (
-          <AgentPanel
-            key={a.id}
-            termId={a.termId}
-            agentId={a.id}
-            label={a.label}
-            cwd={`agents/${a.dir}`}
-            online={peerIds.has(a.id)}
+          <SessionBar
+            relayReady={relayReady}
+            peerCount={peers.length}
+            agentUrls={AGENTS.map((a) => ({ id: a.id, label: a.label.split(" ")[1] ?? a.id, url: agentUrls[a.id] ?? "" }))}
+            onReset={handleReset}
           />
-        ))}
-      </main>
 
-      <WhisperLog entries={store.transcript} />
-    </div>
+          <main className="flex min-h-0 flex-1 divide-x divide-line">
+            {AGENTS.map((a) => (
+              <AgentPanel
+                key={a.id}
+                termId={a.termId}
+                agentId={a.id}
+                label={a.label}
+                cwd={`agents/${a.dir}`}
+                online={peerIds.has(a.id)}
+              />
+            ))}
+          </main>
+
+          <WhisperLog entries={store.transcript} />
+        </div>
+      </ShortcutsProvider>
+    </ThemeProvider>
   );
 }
