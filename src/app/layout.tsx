@@ -44,8 +44,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    // themeInitScript (below) rewrites data-theme + the `dark` class on <html>
+    // from localStorage before hydration, so the server default
+    // (data-theme="midnight" + dark) intentionally differs from the client.
+    // suppressHydrationWarning silences the warning for THIS element's own
+    // attributes only — it does not cascade to children.
     <html
       lang="en"
+      suppressHydrationWarning
       data-theme={DEFAULT_THEME_ID}
       className={`dark ${geistSans.variable} ${geistMono.variable} ${jetBrainsMono.variable} h-full antialiased`}
     >
