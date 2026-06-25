@@ -10,7 +10,12 @@
     "start": "NODE_ENV=production tsx server.ts",
     "lint": "eslint",
     "host:headless": "tsx scripts/headless-host.ts",
-    "test:pty": "node scripts/test-pty.mjs"
+    "test:pty": "node scripts/test-pty.mjs",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "node --import tsx --test tests/unit/whisperState.test.ts tests/unit/whisperBridge.test.ts tests/unit/session.test.ts",
+    "test:integration": "node --import tsx --test tests/integration/whisperServer.test.ts tests/integration/sessionRoute.test.ts tests/integration/serverConfig.test.ts",
+    "test:e2e": "tsx tests/e2e/whisper-roundtrip.ts",
+    "test:e2e:pty": "node tests/e2e/pty-cwd.mjs"
   },
   "dependencies": {
     "@particle-academy/agent-integrations": "^0.19.0",
