@@ -43,3 +43,7 @@ next-env.d.ts
 # WhisperChat agent runtime config (written per-session, contains live token)
 agents/*/.mcp.json
 agents/*/.claude/settings.local.json
+
+# Local session scratch — dated TODOs + the session-resume helper (not committed)
+TODO-*.md
+pickup-where-i-left-off.sh
