@@ -155,20 +155,24 @@
   );
 }
 
-/* ---------- Trans Pride (light) ---------- */
+/* ---------- Trans Pride (light) ----------
+   Soft sky-blue / white / pink chrome (no harsh white) with deep slate-blue ink
+   that sits inside the wash. Accents are flag blue & pink, deepened so they stay
+   legible as text on the light surfaces. The stripe keeps the exact flag colors
+   (the white there is the flag, not a background). */
 [data-theme="trans"] {
-  --bg: #eaf6fd;
-  --surface: #ffffff;
-  --surface-2: #fdeef2;
-  --border: #cfe7f5;
-  --text: #2a3b47;
-  --text-muted: #5d7787;
-  --text-dim: #9bb3c1;
-  --accent: #4cb8e8;
-  --accent-2: #ec8aa0;
+  --bg: #e3f1fb;
+  --surface: #eef6fc;
+  --surface-2: #f7e8ee;
+  --border: #cfe1ee;
+  --text: #233440;
+  --text-muted: #56707f;
+  --text-dim: #93acbb;
+  --accent: #2596c9;
+  --accent-2: #e06a93;
 
   --app-font: var(--font-sans);
-  --bg-image: linear-gradient(180deg, #eaf6fd 0%, #fdeef2 100%);
+  --bg-image: linear-gradient(170deg, #e3f1fb 0%, #eef6fc 50%, #f7e8ee 100%);
   /* Trans flag stripes: blue / pink / white / pink / blue. */
   --stripe: linear-gradient(
     90deg,
@@ -197,24 +201,30 @@
   --stripe: linear-gradient(90deg, #ec4899, #f472b6, #22c55e);
 }
 
-/* ---------- Pastel (light) ---------- */
+/* ---------- Pastel (soft lavender, light) ----------
+   Soft lavender canvas with deep indigo-ink text (warmer than zinc, so it sits
+   inside the wash — per the Fancy "Brand Gradient" blueprint), a violet primary
+   accent and a complementary teal secondary; both deep enough to stay legible
+   on the light lavender surfaces. */
 [data-theme="pastel"] {
-  --bg: #faf7fd;
-  --surface: #ffffff;
-  --surface-2: #f3eefb;
-  --border: #e7def3;
-  --text: #4a4458;
-  --text-muted: #837a92;
-  --text-dim: #b7aecb;
-  --accent: #b794e0;
-  --accent-2: #7fd1b0;
+  --bg: #ece7fb;
+  --surface: #f3eefc;
+  --surface-2: #e6def7;
+  --border: #d8ccef;
+  --text: #221d40;
+  --text-muted: #4a4870;
+  --text-dim: #837ea6;
+  --accent: #7c3aed;
+  --accent-2: #0d9488;
 
   --app-font: var(--font-sans);
-  --bg-image: linear-gradient(135deg, #faf7fd 0%, #eef9f4 100%);
-  --stripe: linear-gradient(
-    90deg,
-    #f7c4dd, #c4a7e7, #a7c4e7, #a8e6cf, #f7e7a7
-  );
+  /* Layered lavender wash: violet + a touch of sky/indigo over soft lavender. */
+  --bg-image:
+    radial-gradient(80% 60% at 12% 0%, rgba(196, 181, 253, 0.55), transparent 60%),
+    radial-gradient(65% 55% at 100% 8%, rgba(125, 211, 252, 0.3), transparent 60%),
+    radial-gradient(90% 70% at 50% 112%, rgba(129, 140, 248, 0.4), transparent 60%),
+    linear-gradient(160deg, #ece7fb 0%, #e7e2f9 100%);
+  --stripe: linear-gradient(90deg, #a78bfa, #818cf8 52%, #5eead4);
 }
 
 /* ---------- Clouds (light, airy) ---------- */
@@ -291,4 +301,39 @@ body::before {
 .xterm,
 .xterm .xterm-viewport {
   height: 100%;
+}
+
+/* ---------- Terminal stage ----------
+   Lets a theme paint a custom background (e.g. tiled art) on the container,
+   BEHIND the fancy-term surface. xterm uses the DOM renderer, so when a theme
+   also makes the .xterm layers transparent the container background shows
+   through (see pink-green below). No-op by default. */
+.term-stage {
+  position: relative;
+}
+
+/* ---------- Watermelon: tiled MelonDrip art over dark pink ----------
+   Painted directly on the container background (behind the transparent xterm):
+   - a 50%-opacity dark-pink veil layer dims the art to ~half strength;
+   - two offset tile layers give a staggered (brick-ish) melon field;
+   - the solid dark-pink base sits underneath. */
+[data-theme="pink-green"] .term-stage {
+  background-color: #3d1226;
+  background-image:
+    linear-gradient(rgba(61, 18, 38, 0.65), rgba(61, 18, 38, 0.65)),
+    url("/themes/watermelon/melon-drip.png"),
+    url("/themes/watermelon/melon-drip.png");
+  background-repeat: no-repeat, repeat, repeat;
+  background-position: center, 0px 0px, 75px 80px;
+  background-size: cover, 150px auto, 150px auto;
+}
+/* Make the fancy-term surface transparent so the art shows through. xterm's DOM
+   renderer paints theme.background onto .xterm-scrollable-element, so that one
+   is the key override (the others are belt-and-suspenders). */
+[data-theme="pink-green"] .term-stage [data-fancy-terminal],
+[data-theme="pink-green"] .term-stage .xterm,
+[data-theme="pink-green"] .term-stage .xterm-scrollable-element,
+[data-theme="pink-green"] .term-stage .xterm-viewport,
+[data-theme="pink-green"] .term-stage .xterm-screen {
+  background-color: transparent !important;
 }

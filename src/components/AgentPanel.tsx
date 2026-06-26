@@ -43,7 +43,7 @@ export function AgentPanel({ termId, agentId, label, cwd, online }: AgentPanelPr
         </div>
       </header>
 
-      <div className="relative min-h-0 flex-1 p-2">
+      <div className="term-stage relative min-h-0 flex-1 p-2">
         <Terminal
           ref={setTerminalRef}
           onData={onData}

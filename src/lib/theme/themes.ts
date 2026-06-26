@@ -46,7 +46,13 @@ export type ThemeDef = {
 const MONO_DEFAULT = "var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace";
 const MONO_TERMINAL = "var(--font-jetbrains), ui-monospace, SFMono-Regular, monospace";
 
-/** Shared ANSI 16-color base; per-theme terminals override the surface trio. */
+/** Shared ANSI 16-color base; per-theme terminals override the surface trio.
+ *
+ * `white` (7) and `brightWhite` (15) are deliberately spread apart: Claude
+ * Code's TUI marks the selected autocomplete row with palette 15 and leaves
+ * unselected rows on palette 7. With both near-white (#e4e4e7 vs #fafafa) the
+ * selection was invisible, so 15 is pure white and 7 is nudged down to a muted
+ * gray — a brightness-only gap that reads as a subtle highlight (no bg, no hue). */
 const ANSI = {
   black: "#1a1a1a",
   red: "#f43f5e",
@@ -55,7 +61,7 @@ const ANSI = {
   blue: "#3b82f6",
   magenta: "#a855f7",
   cyan: "#22d3ee",
-  white: "#e4e4e7",
+  white: "#c4c4cb",
   brightBlack: "#52525b",
   brightRed: "#fb7185",
   brightGreen: "#34d399",
@@ -63,7 +69,7 @@ const ANSI = {
   brightBlue: "#60a5fa",
   brightMagenta: "#c084fc",
   brightCyan: "#67e8f9",
-  brightWhite: "#fafafa",
+  brightWhite: "#ffffff",
 } as const;
 
 /** ANSI base tuned for light terminal surfaces (darker primaries for contrast). */
@@ -160,13 +166,22 @@ export const THEMES: Record<ThemeId, ThemeDef> = {
     mode: "light",
     swatch: ["#5bcefa", "#f5a9b8", "#ffffff"],
     terminalFont: MONO_DEFAULT,
+    // Deep slate-blue terminal under the soft trans-flag chrome: light text on a
+    // dark surface keeps Claude's TUI readable (a light terminal hid its light
+    // menu/emphasis text). Flag blue cursor + flag pink magenta. Dark ANSI base
+    // → 15/7 menu fix.
     terminal: {
-      ...ANSI_LIGHT,
-      background: "#f3fbff",
-      foreground: "#2a3b47",
+      ...ANSI,
+      background: "#15222e",
+      foreground: "#e6eef5",
       cursor: "#5bcefa",
-      cursorAccent: "#f3fbff",
-      selectionBackground: "#cfe7f5",
+      cursorAccent: "#15222e",
+      selectionBackground: "#2c4254",
+      blue: "#5bcefa",
+      cyan: "#7dd3fc",
+      magenta: "#f5a9b8",
+      brightBlue: "#8fdcff",
+      brightMagenta: "#f9c6d5",
     },
   },
 
@@ -177,15 +192,20 @@ export const THEMES: Record<ThemeId, ThemeDef> = {
     mode: "light",
     swatch: ["#fff0f6", "#ec4899", "#22c55e"],
     terminalFont: MONO_DEFAULT,
+    // Dark-pink terminal under the tiled MelonDrip art. `background` here is the
+    // solid base tint / fallback; the .xterm layer is made transparent in CSS
+    // (globals.css [data-theme="pink-green"] .term-stage) so the art shows
+    // through. Dark ANSI base → light, legible text over it.
     terminal: {
-      ...ANSI_LIGHT,
-      background: "#fff5f9",
-      foreground: "#3d2230",
+      ...ANSI,
+      background: "#3d1226",
+      foreground: "#f7dde8",
       cursor: "#ec4899",
-      cursorAccent: "#fff5f9",
-      selectionBackground: "#f9c6dd",
-      green: "#16a34a",
-      magenta: "#db2777",
+      cursorAccent: "#3d1226",
+      selectionBackground: "#5a2238",
+      green: "#34d399",
+      magenta: "#f472b6",
+      brightMagenta: "#f9a8d4",
     },
   },
 
@@ -253,15 +273,21 @@ export const THEMES: Record<ThemeId, ThemeDef> = {
     mode: "light",
     swatch: ["#faf7fd", "#c4a7e7", "#a8e6cf"],
     terminalFont: MONO_DEFAULT,
+    // Deep-lavender terminal under the soft-lavender chrome: light text on a
+    // rich violet-charcoal so Claude's TUI stays readable (a light terminal
+    // hides its light menu/emphasis text). Dark ANSI base → 15/7 menu fix.
     terminal: {
-      ...ANSI_LIGHT,
-      background: "#fbf9fe",
-      foreground: "#4a4458",
-      cursor: "#c4a7e7",
-      cursorAccent: "#fbf9fe",
-      selectionBackground: "#e7def3",
-      magenta: "#a78bdb",
-      green: "#5fcf9f",
+      ...ANSI,
+      background: "#1c1830",
+      foreground: "#e9e3f6",
+      cursor: "#a78bfa",
+      cursorAccent: "#1c1830",
+      selectionBackground: "#3a2f54",
+      magenta: "#c4a7e7",
+      blue: "#818cf8",
+      cyan: "#5eead4",
+      brightMagenta: "#d8b4fe",
+      brightCyan: "#99f6e4",
     },
   },
 };
