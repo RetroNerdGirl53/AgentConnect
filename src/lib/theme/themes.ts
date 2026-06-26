@@ -249,7 +249,7 @@ export const THEMES: Record<ThemeId, ThemeDef> = {
 
   xp: {
     id: "xp",
-    label: "Windows XP",
+    label: "Lindows XB",
     hint: "Luna blue, beige chrome & start-menu green",
     mode: "light",
     swatch: ["#245edc", "#ece9d8", "#3c9311"],
