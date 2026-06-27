@@ -4,6 +4,7 @@ import { Badge, Button, cn } from "@particle-academy/react-fancy";
 import { Terminal } from "@particle-academy/fancy-term";
 import { useTerminalSocket } from "@/lib/terminal/useTerminalSocket";
 import { useTheme } from "@/lib/theme/ThemeProvider";
+import { LaunchClaudeButton } from "./LaunchClaudeButton";
 
 export type AgentPanelProps = {
   termId: string;
@@ -34,9 +35,7 @@ export function AgentPanel({ termId, agentId, label, cwd, online }: AgentPanelPr
           <p className="truncate font-mono text-xs text-faint">{cwd}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="default" onClick={() => sendText("claude\r")}>
-            Launch Claude
-          </Button>
+          <LaunchClaudeButton sendText={sendText} />
           <Button size="sm" variant="ghost" onClick={clear}>
             Clear
           </Button>
