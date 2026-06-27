@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+#
+# WhisperChat app guard (git pre-commit).
+#
+# Blocks a commit that touches WhisperChat app files (MCP server / whisper
+# protocol / skills / app source / configs / agent CLAUDE.md) WHEN the commit is
+# made from inside an agent working dir (agents/agent-*). Commits from the repo
+# root — i.e. you, the maintainer — are unaffected.
+#
+# Git sets GIT_PREFIX to the subdir `git` was invoked from. So a `git commit`
+# run by an agent whose cwd is agents/agent-a has GIT_PREFIX="agents/agent-a/".
+#
+# Override (maintainer escape hatch):  WHISPERCHAT_ALLOW_APP_COMMIT=1 git commit ...
+#
+# Activate once:  git config core.hooksPath .githooks
+set -euo pipefail
+
+if [ "${WHISPERCHAT_ALLOW_APP_COMMIT:-}" = "1" ]; then
+  exit 0
+fi
+
+# Only guard commits originating from an agent directory.
+case "${GIT_PREFIX:-}" in
+  agents/agent-*) ;;
+  *) exit 0 ;;
+esac
+
+# Protected app paths (repo-relative, regex).
+protected_re='^(src/|server\.ts$|\.claude/skills/|\.claude/hooks/|agents/[^/]+/CLAUDE\.md$|whisper\.config\.json$|next\.config\.ts$|postcss\.config\.mjs$|eslint\.config\.mjs$|tsconfig\.json$|package\.json$|package-lock\.json$)'
+
+staged="$(git diff --cached --name-only)"
+blocked="$(printf '%s\n' "$staged" | grep -E "$protected_re" || true)"
+
+if [ -n "$blocked" ]; then
+  echo "✗ Commit blocked: an agent (GIT_PREFIX=${GIT_PREFIX}) is trying to commit changes to WhisperChat app files:" >&2
+  printf '    %s\n' $blocked >&2
+  echo "  Agents must not modify the app they run inside." >&2
+  echo "  (Maintainer override: WHISPERCHAT_ALLOW_APP_COMMIT=1 git commit ...)" >&2
+  exit 1
+fi
+
+exit 0
