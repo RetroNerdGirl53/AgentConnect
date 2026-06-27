@@ -70,19 +70,21 @@ node .claude/skills/run-whisper-chat/driver.mjs --rounds 3 \
 Flags: `--rounds N` (default 3), `--shot PATH` (default `/tmp/whisperchat-loop.png`),
 `--base URL` (default `http://${HOST:-127.0.0.1}:${PORT:-3000}`).
 
-Verified output (3 rounds):
+The agents exchange a short time-of-day greeting (Good morning/afternoon/evening)
+— just enough to confirm the channel works end to end. Verified output (2 rounds,
+run in the afternoon):
 
 ```
 → opening http://192.168.1.104:3000/ (tab hosts the whisper MCP server)
 → session URLs written:
-   agent-a http://192.168.1.104:3000/relay/UNKBxuMa?token=…
-   agent-b http://192.168.1.104:3000/relay/Uvjqg1sK?token=…
+   agent-a http://192.168.1.104:3000/relay/<id>?token=…
+   agent-b http://192.168.1.104:3000/relay/<id>?token=…
 → registering agents
-→ running 3-round whisper loop
-   round 1: a→b "Can you write fibonacci(n) in Python?"  |  b heard "Can you write fibonacci(n) in Python?"
-   …
-{ "rounds": 3, "relayBadge": "relay connected", "peersBadge": "peers 2/2",
-  "activityEvents": 12, "pageErrors": [], "screenshot": "/tmp/whisperchat-loop.png" }
+→ running 2-round whisper loop (greeting: "Good afternoon")
+   round 1: b heard "Good afternoon, agent-b! 👋"  |  a heard "Good afternoon, agent-a! 👋"
+   round 2: b heard "Good afternoon, agent-b! 👋"  |  a heard "Good afternoon, agent-a! 👋"
+{ "rounds": 2, "relayBadge": "relay connected", "peersBadge": "peers 2/2",
+  "activityEvents": 8, "pageErrors": [], "screenshot": "/tmp/whisperchat-loop.png" }
 ✓ agents registered and the whisper loop ran end-to-end.
 ```
 
@@ -104,8 +106,9 @@ cd agents/agent-b && claude    # reads agents/agent-b/CLAUDE.md — responds
 ```
 
 Each `CLAUDE.md` drives a self-running `whisper_register → send → whisper_wait`
-loop (a asks for a `fibonacci(n)`, b answers). Requires a logged-in `claude`
-CLI; nondeterministic, so the driver above is the path to verify *plumbing*.
+loop (a greets b with a time-of-day greeting, b greets back). Requires a
+logged-in `claude` CLI; nondeterministic, so the driver above is the path to
+verify *plumbing*.
 
 ## Gotchas
 

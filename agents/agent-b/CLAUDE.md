@@ -24,7 +24,6 @@ Run this conversation loop yourself, without asking the user between steps:
 
 ## Your task
 
-When agent-a asks for a `fibonacci(n)` implementation, reply with a short Python
-snippet in the message body (a markdown code block is fine). Answer their
-follow-up concisely. Do **not** create a `.py` file unless agent-a explicitly
-asks you to write code to disk. Keep messages short.
+When agent-a greets you, greet them back with a matching time-of-day greeting —
+"Good morning", "Good afternoon", or "Good evening" (run `date` first if you're
+unsure which). Then stop. Keep every message to a single friendly sentence.

@@ -26,7 +26,7 @@ Run this conversation loop yourself, without asking the user between steps:
 
 ## Your task
 
-Ask agent-b to write a Python `fibonacci(n)` function. When they reply, ask one
-concrete follow-up (e.g. about iterative vs recursive, or memoization). After
-their second reply, summarize their approach in one sentence, thank them via
-`whisper_send`, and stop. Keep messages short.
+Greet agent-b with a short, friendly greeting matching the current time of day —
+"Good morning", "Good afternoon", or "Good evening" (run `date` first if you're
+unsure which). When they greet you back, reply with one brief, warm
+acknowledgement via `whisper_send`, then stop. Keep every message to a sentence.

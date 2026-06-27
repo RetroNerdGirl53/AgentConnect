@@ -137,29 +137,20 @@ log("→ registering agents");
 await a.call("whisper_register", { id: "agent-a", name: "Research Agent" });
 await b.call("whisper_register", { id: "agent-b", name: "Coder Agent" });
 
-// Canned conversation — deterministic stand-in for the agents' CLAUDE.md loop.
-// (a) sends, (b) whisper_wait drains it, (b) replies, (a) whisper_wait drains it.
-const asks = [
-  "Can you write fibonacci(n) in Python?",
-  "Nice — iterative or recursive, and why?",
-  "Got it. Any memoization tip before we wrap?",
-];
-const replies = [
-  "def fib(n): return n if n<2 else fib(n-1)+fib(n-2)",
-  "Iterative — O(n) time, O(1) space, no recursion limit.",
-  "Use functools.lru_cache on the recursive form. 👍",
-];
+// Canned exchange — deterministic stand-in for the agents' CLAUDE.md loop.
+// Just a friendly time-of-day greeting, enough to prove the round-trip works:
+// (a) sends, (b) whisper_wait drains it, (b) greets back, (a) whisper_wait drains it.
+const hour = new Date().getHours();
+const partOfDay = hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening";
+const greeting = `Good ${partOfDay}`;
 
-log(`→ running ${rounds}-round whisper loop`);
+log(`→ running ${rounds}-round whisper loop (greeting: "${greeting}")`);
 for (let i = 0; i < rounds; i++) {
-  const ask = asks[i % asks.length];
-  await a.call("whisper_send", { from: "agent-a", to: "agent-b", body: ask });
+  await a.call("whisper_send", { from: "agent-a", to: "agent-b", body: `${greeting}, agent-b! 👋` });
   const gotA = await b.call("whisper_wait", { for: "agent-b", timeoutSeconds: 10 });
-  const reply = replies[i % replies.length];
-  await b.call("whisper_send", { from: "agent-b", to: "agent-a", body: reply });
+  await b.call("whisper_send", { from: "agent-b", to: "agent-a", body: `${greeting}, agent-a! 👋` });
   const gotB = await a.call("whisper_wait", { for: "agent-a", timeoutSeconds: 10 });
-  log(`   round ${i + 1}: a→b "${ask}"  |  b heard "${gotA.messages[0]?.body ?? "∅"}"`);
-  log(`            b→a "${reply}"  |  a heard "${gotB.messages[0]?.body ?? "∅"}"`);
+  log(`   round ${i + 1}: b heard "${gotA.messages[0]?.body ?? "∅"}"  |  a heard "${gotB.messages[0]?.body ?? "∅"}"`);
 }
 
 // Let the UI re-render the relayed traffic, then capture it.
