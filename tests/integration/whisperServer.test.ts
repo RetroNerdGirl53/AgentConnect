@@ -26,6 +26,7 @@ import {
 } from "@particle-academy/agent-integrations/mcp";
 import { createWhisperServer } from "../../src/lib/mcp/createWhisperServer";
 import { WhisperStore } from "../../src/lib/mcp/whisperState";
+import { WHISPER_MARKER } from "../../src/lib/mcp/whisperProtocol";
 
 const WHISPER_TOOLS = ["whisper_peers", "whisper_poll", "whisper_register", "whisper_send", "whisper_wait"];
 
@@ -91,12 +92,13 @@ test("two agents sharing one server exchange a message (register → send → po
   assert.equal(peers.peers.length, 2);
 
   const sent = parse(await server.callTool("whisper_send", {
+    marker: WHISPER_MARKER,
     from: "agent-a",
     to: "agent-b",
     body: "Please write fibonacci in Python",
   }));
   assert.equal(sent.ok, true);
-  assert.equal(sent.recipientOnline, true);
+  assert.equal(sent.recipients[0].online, true);
 
   const got = parse(await server.callTool("whisper_poll", { for: "agent-b" }));
   assert.equal(got.messages.length, 1);
@@ -118,7 +120,7 @@ test("whisper_wait delivers a reply that arrives mid-wait (the back-and-forth pa
   // agent-a blocks waiting for a reply; agent-b answers shortly after.
   const waiting = server.callTool("whisper_wait", { for: "agent-a", timeoutSeconds: 25 });
   setTimeout(() => {
-    void server.callTool("whisper_send", { from: "agent-b", to: "agent-a", body: "def fib(n): ..." });
+    void server.callTool("whisper_send", { marker: WHISPER_MARKER, from: "agent-b", to: "agent-a", body: "def fib(n): ..." });
   }, 50);
 
   const res = parse(await waiting);

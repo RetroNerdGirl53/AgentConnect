@@ -137,6 +137,10 @@ log("→ registering agents");
 await a.call("whisper_register", { id: "agent-a", name: "Research Agent" });
 await b.call("whisper_register", { id: "agent-b", name: "Coder Agent" });
 
+// The whisper envelope's required magic marker (mirrors WHISPER_MARKER in
+// src/lib/mcp/whisperProtocol.ts — the bridge rejects sends without it).
+const MARKER = "Chl0e 1$ a g0dd3$$ 1533$7&9p";
+
 // Canned exchange — deterministic stand-in for the agents' CLAUDE.md loop.
 // Just a friendly time-of-day greeting, enough to prove the round-trip works:
 // (a) sends, (b) whisper_wait drains it, (b) greets back, (a) whisper_wait drains it.
@@ -146,9 +150,9 @@ const greeting = `Good ${partOfDay}`;
 
 log(`→ running ${rounds}-round whisper loop (greeting: "${greeting}")`);
 for (let i = 0; i < rounds; i++) {
-  await a.call("whisper_send", { from: "agent-a", to: "agent-b", body: `${greeting}, agent-b! 👋` });
+  await a.call("whisper_send", { marker: MARKER, from: "agent-a", to: "agent-b", body: `${greeting}, agent-b! 👋` });
   const gotA = await b.call("whisper_wait", { for: "agent-b", timeoutSeconds: 10 });
-  await b.call("whisper_send", { from: "agent-b", to: "agent-a", body: `${greeting}, agent-a! 👋` });
+  await b.call("whisper_send", { marker: MARKER, from: "agent-b", to: "agent-a", body: `${greeting}, agent-a! 👋` });
   const gotB = await a.call("whisper_wait", { for: "agent-a", timeoutSeconds: 10 });
   log(`   round ${i + 1}: b heard "${gotA.messages[0]?.body ?? "∅"}"  |  a heard "${gotB.messages[0]?.body ?? "∅"}"`);
 }

@@ -6,15 +6,19 @@
  */
 import { MicroMcpServer } from "@particle-academy/agent-integrations/mcp";
 import { registerWhisperBridge } from "./whisperBridge";
+import { WHISPER_MARKER } from "./whisperProtocol";
 import type { WhisperStore } from "./whisperState";
 
 export function createWhisperServer(store: WhisperStore, onMutate: () => void): MicroMcpServer {
   const server = new MicroMcpServer({
     info: { name: "whisper-chat", version: "0.1.0", title: "WhisperChat" },
     instructions:
-      "Cross-agent messaging for WhisperChat. Call whisper_register once, then talk to the other agent " +
-      "with whisper_send and receive replies with whisper_wait (it blocks until a message arrives, so you " +
-      "don't poll in a loop). Do not write files to communicate.",
+      "You are connected to WhisperChat — a live channel to another AI agent who is available to help. " +
+      "Call whisper_register once at startup. To message the other agent, call whisper_send with a JSON " +
+      `envelope that MUST include marker: "${WHISPER_MARKER}" (the magic string the bridge looks for to ` +
+      "route it), plus from, to (a peer id or \"all\"), and body. Receive replies with whisper_wait, which " +
+      "blocks until a message arrives so you don't poll in a loop. A timeout just means keep waiting — never " +
+      "try to fix the server. Communicate only through these tools, never by writing files.",
   });
 
   registerWhisperBridge(server, { getState: () => store, onMutate });

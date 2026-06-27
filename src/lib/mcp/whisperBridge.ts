@@ -9,6 +9,12 @@
  */
 import { textResult, type ToolDefinition, type ToolHandler } from "@particle-academy/agent-integrations/mcp";
 import type { WhisperStore } from "./whisperState";
+import {
+  hasValidMarker,
+  resolveRecipients,
+  WHISPER_MARKER,
+  WHISPER_PROTOCOL_VERSION,
+} from "./whisperProtocol";
 
 /** Minimal surface a bridge needs — MicroMcpServer satisfies it. */
 type ToolRegistrar = {
@@ -82,25 +88,42 @@ export function registerWhisperBridge(host: ToolRegistrar, opts: WhisperBridgeOp
       {
         name: "whisper_send",
         description:
-          "Send a message to another peer. The message waits in their inbox until they whisper_poll.",
+          "Send a whisper-protocol envelope to another agent. The envelope MUST include " +
+          `marker: "${WHISPER_MARKER}" — that magic string is how the bridge knows this is a real ` +
+          "agent message and routes it; without it the message is rejected, not delivered. `to` is a " +
+          'peer id, an array of ids, or "all" to broadcast. The message waits in each recipient\'s inbox ' +
+          "until they whisper_wait / whisper_poll (it is never dropped).",
         inputSchema: {
           type: "object",
           properties: {
+            marker: {
+              type: "string",
+              description: `Required magic string. Must be exactly: ${WHISPER_MARKER}`,
+            },
             from: { type: "string", description: "Your peer id." },
-            to: { type: "string", description: "Recipient peer id." },
+            to: { description: 'Recipient peer id, an array of ids, or "all" to broadcast.' },
             body: { type: "string", description: "Message text (markdown ok)." },
-            correlationId: { type: "string", description: "Optional id to thread a reply." },
+            replyTo: { type: "string", description: "Optional id of the message this replies to (threading)." },
+            v: { type: "number", description: `Optional envelope version (current: ${WHISPER_PROTOCOL_VERSION}).` },
           },
-          required: ["from", "to", "body"],
+          required: ["marker", "from", "to", "body"],
         },
       },
       async (args) => {
+        // The marker is the gate: only envelopes carrying the exact magic string
+        // route. This is what "only messages meant for agents get through" means.
+        if (!hasValidMarker(args.marker)) {
+          return textResult(
+            JSON.stringify({ ok: false, error: "invalid or missing marker — not a whisper envelope; message not routed" }),
+          );
+        }
         const from = String(args.from ?? "").trim();
-        const to = String(args.to ?? "").trim();
         const body = String(args.body ?? "");
-        const correlationId = args.correlationId == null ? undefined : String(args.correlationId);
+        // `replyTo` is the envelope name; accept legacy `correlationId` as an alias.
+        const replyToRaw = args.replyTo ?? args.correlationId;
+        const replyTo = replyToRaw == null ? undefined : String(replyToRaw);
         const state = getState();
-        if (!from || !to || !body) {
+        if (!from || args.to == null || !body) {
           return textResult(JSON.stringify({ ok: false, error: "from, to and body are required" }));
         }
         if (body.length > MAX_BODY) {
@@ -111,15 +134,19 @@ export function registerWhisperBridge(host: ToolRegistrar, opts: WhisperBridgeOp
             JSON.stringify({ ok: false, error: `unknown sender '${from}' — call whisper_register first` }),
           );
         }
-        // Queue even if the recipient hasn't registered yet: it'll be waiting in
-        // their inbox when they come online (avoids startup-order races).
-        const msg = state.send(from, to, body, correlationId);
+        const recipients = resolveRecipients(args.to, from, state.listPeers().map((p) => p.id));
+        if (recipients.length === 0) {
+          return textResult(JSON.stringify({ ok: false, error: "no valid recipients in 'to'" }));
+        }
+        // Queue for each recipient even if they haven't registered yet — it waits
+        // in their inbox (avoids startup-order races; nothing is dropped).
+        const sent = recipients.map((to) => ({ to, msg: state.send(from, to, body, replyTo) }));
         mutated();
         const payload = {
           ok: true,
-          messageId: msg.id,
-          ts: msg.ts,
-          recipientOnline: state.hasPeer(to),
+          messageIds: sent.map((s) => s.msg.id),
+          ts: sent[0].msg.ts,
+          recipients: sent.map((s) => ({ to: s.to, messageId: s.msg.id, online: state.hasPeer(s.to) })),
         };
         return textResult(JSON.stringify(payload), payload);
       },

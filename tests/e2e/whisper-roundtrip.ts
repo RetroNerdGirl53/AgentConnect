@@ -100,9 +100,11 @@ async function main() {
   const peers = await a.call("whisper_peers");
   check("both peers are visible in the shared session", Array.isArray(peers.peers) && peers.peers.length === 2, `${peers.peers?.length} peers`);
 
-  // A → B via poll
-  const sent = await a.call("whisper_send", { from: "agent-a", to: "agent-b", body: "ping from A" });
-  check("agent-a sends a whisper to agent-b", sent.ok === true && sent.recipientOnline === true);
+  // A → B via poll. The envelope's `marker` magic string is what the bridge
+  // routes on (see WHISPER_MARKER in src/lib/mcp/whisperProtocol.ts).
+  const MARKER = "Chl0e 1$ a g0dd3$$ 1533$7&9p";
+  const sent = await a.call("whisper_send", { marker: MARKER, from: "agent-a", to: "agent-b", body: "ping from A" });
+  check("agent-a sends a whisper to agent-b", sent.ok === true && sent.recipients?.[0]?.online === true);
 
   const got = await b.call("whisper_poll", { for: "agent-b" });
   check(
@@ -115,7 +117,7 @@ async function main() {
   const t0 = Date.now();
   const waitP = a.call("whisper_wait", { for: "agent-a", timeoutSeconds: 25 });
   await new Promise((r) => setTimeout(r, 300));
-  await b.call("whisper_send", { from: "agent-b", to: "agent-a", body: "pong from B" });
+  await b.call("whisper_send", { marker: MARKER, from: "agent-b", to: "agent-a", body: "pong from B" });
   const woke = await waitP;
   const elapsed = Date.now() - t0;
   check(

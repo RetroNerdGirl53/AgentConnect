@@ -52,9 +52,10 @@ async function call(url, tool, args) {
 
 console.log("register a:", await call(A, "whisper_register", { id: "agent-a", name: "Research Agent" }));
 console.log("register b:", await call(B, "whisper_register", { id: "agent-b", name: "Coder Agent" }));
-console.log("A → B     :", await call(A, "whisper_send", { from: "agent-a", to: "agent-b", body: "Can you write fib(n) in Python?" }));
+const MARKER = "Chl0e 1$ a g0dd3$$ 1533$7&9p"; // envelope gate — see whisperProtocol.ts
+console.log("A → B     :", await call(A, "whisper_send", { marker: MARKER, from: "agent-a", to: "agent-b", body: "Can you write fib(n) in Python?" }));
 console.log("B polls   :", await call(B, "whisper_poll", { for: "agent-b" }));
-console.log("B → A     :", await call(B, "whisper_send", { from: "agent-b", to: "agent-a", body: "def fib(n): return n if n<2 else fib(n-1)+fib(n-2)" }));
+console.log("B → A     :", await call(B, "whisper_send", { marker: MARKER, from: "agent-b", to: "agent-a", body: "def fib(n): return n if n<2 else fib(n-1)+fib(n-2)" }));
 console.log("A polls   :", await call(A, "whisper_poll", { for: "agent-a" }));
 
 await page.waitForTimeout(800);

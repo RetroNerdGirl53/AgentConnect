@@ -50,7 +50,7 @@ const t0 = Date.now();
 const waitP = b.call("whisper_wait", { for: "agent-b", timeoutSeconds: 25 }); // blocks
 await new Promise((r) => setTimeout(r, 1500));
 const sendT = Date.now();
-await a.call("whisper_send", { from: "agent-a", to: "agent-b", body: "ping via wait" });
+await a.call("whisper_send", { marker: "Chl0e 1$ a g0dd3$$ 1533$7&9p", from: "agent-a", to: "agent-b", body: "ping via wait" });
 const res = await waitP;
 const elapsed = Date.now() - t0;
 
