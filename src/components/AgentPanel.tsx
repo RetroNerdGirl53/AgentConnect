@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { Badge, Button, cn } from "@particle-academy/react-fancy";
 import { Terminal } from "@particle-academy/fancy-term";
 import { useTerminalSocket } from "@/lib/terminal/useTerminalSocket";
@@ -13,11 +14,20 @@ export type AgentPanelProps = {
   cwd: string;
   /** true once the agent has registered over whisper (peer is present). */
   online: boolean;
+  /** Expose this terminal's input/read handle so the store can push to it. */
+  registerTerminal: (id: string, api: { write: (data: string) => void; getBuffer?: () => string } | null) => void;
 };
 
-export function AgentPanel({ termId, agentId, label, cwd, online }: AgentPanelProps) {
-  const { setTerminalRef, onData, onResize, sendText, clear, status } = useTerminalSocket(termId);
+export function AgentPanel({ termId, agentId, label, cwd, online, registerTerminal }: AgentPanelProps) {
+  const { setTerminalRef, onData, onResize, sendText, getBuffer, clear, status } = useTerminalSocket(termId);
   const { theme } = useTheme();
+
+  // Publish this terminal's write (PTY stdin) + buffer read so WhisperChat's
+  // push deliverer and the terminal bridge can reach into it.
+  useEffect(() => {
+    registerTerminal(agentId, { write: sendText, getBuffer });
+    return () => registerTerminal(agentId, null);
+  }, [agentId, sendText, getBuffer, registerTerminal]);
 
   return (
     <section

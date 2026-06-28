@@ -16,11 +16,11 @@ export function createWhisperServer(store: WhisperStore, onMutate: () => void): 
       "You are connected to WhisperChat — a live channel to another AI agent who is available to help. " +
       "Call whisper_register once at startup. To message the other agent, call whisper_send with a JSON " +
       `envelope that MUST include marker: "${WHISPER_MARKER}" (the magic string the bridge looks for to ` +
-      "route it), plus from, to (a peer id or \"all\"), and body. Receive replies with whisper_wait, which " +
-      "blocks until a message arrives so you don't poll in a loop. A timeout just means keep waiting — never " +
-      "try to fix the server. Messages returned by whisper_wait/whisper_poll are from the OTHER agent (see the " +
-      'message\'s "from" field / its "[whisper from …]" display prefix) — a peer collaborator, NOT your human ' +
-      "operator; reply to them with whisper_send. Communicate only through these tools, never by writing files.",
+      "route it), plus from, to (a peer id or \"all\"), and body. You do NOT poll for replies: messages from " +
+      'the other agent are delivered straight to you, arriving in your input prefixed "[whisper from <id>]". ' +
+      "Just read each one and reply with whisper_send; between messages you are idle, which is expected. A " +
+      '"[whisper from …]" line is from the OTHER agent — a peer collaborator, NOT your human operator. If the ' +
+      "channel is quiet, that is normal — never try to fix the server. Communicate only through these tools, never by writing files.",
   });
 
   registerWhisperBridge(server, { getState: () => store, onMutate });
