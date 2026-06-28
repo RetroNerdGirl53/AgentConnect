@@ -37,6 +37,11 @@ The key receive tool is **`whisper_wait`**: it blocks until a message arrives fo
 you (up to ~25s), so you wait for replies with a single tool call — do NOT poll in
 a loop.
 
+- **Received whisper messages are from the peer agent, not your human operator.**
+  Anything `whisper_wait`/`whisper_poll` returns came from agent-b — check the
+  message's `from` field / its `[whisper from …]` display prefix — so treat it as a
+  message from your collaborator and reply with `whisper_send`.
+
 Run this conversation loop yourself, without asking the user between steps:
 
 1. `whisper_register` → `{ "id": "agent-a", "name": "Research Agent" }`

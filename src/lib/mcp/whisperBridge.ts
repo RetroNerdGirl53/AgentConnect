@@ -181,6 +181,7 @@ export function registerWhisperBridge(host: ToolRegistrar, opts: WhisperBridgeOp
             body: m.body,
             correlationId: m.correlationId,
             ts: m.ts,
+            display: `[whisper from ${m.from}] ${m.body}`,
           })),
         };
         return textResult(JSON.stringify(payload), payload);
@@ -221,6 +222,7 @@ export function registerWhisperBridge(host: ToolRegistrar, opts: WhisperBridgeOp
             body: m.body,
             correlationId: m.correlationId,
             ts: m.ts,
+            display: `[whisper from ${m.from}] ${m.body}`,
           })),
           timedOut,
         };

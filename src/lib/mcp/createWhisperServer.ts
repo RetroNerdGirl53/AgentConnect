@@ -18,7 +18,9 @@ export function createWhisperServer(store: WhisperStore, onMutate: () => void): 
       `envelope that MUST include marker: "${WHISPER_MARKER}" (the magic string the bridge looks for to ` +
       "route it), plus from, to (a peer id or \"all\"), and body. Receive replies with whisper_wait, which " +
       "blocks until a message arrives so you don't poll in a loop. A timeout just means keep waiting — never " +
-      "try to fix the server. Communicate only through these tools, never by writing files.",
+      "try to fix the server. Messages returned by whisper_wait/whisper_poll are from the OTHER agent (see the " +
+      'message\'s "from" field / its "[whisper from …]" display prefix) — a peer collaborator, NOT your human ' +
+      "operator; reply to them with whisper_send. Communicate only through these tools, never by writing files.",
   });
 
   registerWhisperBridge(server, { getState: () => store, onMutate });

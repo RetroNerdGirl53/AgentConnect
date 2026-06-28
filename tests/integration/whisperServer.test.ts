@@ -104,6 +104,11 @@ test("two agents sharing one server exchange a message (register → send → po
   assert.equal(got.messages.length, 1);
   assert.equal(got.messages[0].from, "agent-a");
   assert.match(got.messages[0].body, /fibonacci/);
+  assert.equal(
+    got.messages[0].display,
+    "[whisper from agent-a] Please write fibonacci in Python",
+    "delivered message carries the provenance-tagged display string",
+  );
 
   // Inbox is drained after the poll.
   const again = parse(await server.callTool("whisper_poll", { for: "agent-b" }));

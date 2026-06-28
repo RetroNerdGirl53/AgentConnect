@@ -193,6 +193,7 @@ test("whisper_poll consumes messages and exposes from/body but not the internal 
   assert.equal(m.from, "agent-a");
   assert.equal(m.body, "m1");
   assert.equal(m.correlationId, "c1");
+  assert.equal(m.display, "[whisper from agent-a] m1", "provenance-tagged display string");
   assert.equal("to" in m, false, "recipient field is not echoed back to the poller");
   assert.equal(store.pendingFor("agent-b"), 0, "poll consumes");
 
@@ -216,6 +217,7 @@ test("whisper_wait returns immediately when a message is already waiting", async
   const res = payload(await host.call("whisper_wait", { for: "agent-b", timeoutSeconds: 25 }));
   assert.equal(res.timedOut, false);
   assert.deepEqual(res.messages.map((m: any) => m.body), ["ready"]);
+  assert.equal(res.messages[0].display, "[whisper from agent-a] ready", "provenance-tagged display string");
 });
 
 test("whisper_wait wakes when a message arrives mid-wait", async () => {
