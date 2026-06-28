@@ -23,6 +23,10 @@ type Mode = {
   danger?: boolean;
 };
 
+/** Initial prompt sent with `claude` so the agent starts its CLAUDE.md loop
+ *  immediately (registers + begins the whisper exchange) instead of idling. */
+const KICKOFF = "Begin now: follow your CLAUDE.md instructions and start the whisper exchange.";
+
 const MODES: Mode[] = [
   { key: "default", label: "Default", short: "Default", hint: "Ask for approval (normal)", flag: null },
   { key: "acceptEdits", label: "Auto-Accept Edits", short: "Accept Edits", hint: "Auto-approve file edits", flag: "acceptEdits" },
@@ -43,7 +47,12 @@ export function LaunchClaudeButton({ sendText }: { sendText: (text: string) => v
   const isDanger = !!mode.danger;
 
   const launch = () => {
-    sendText(mode.flag ? `claude --permission-mode ${mode.flag}\r` : "claude\r");
+    // Pass an initial prompt so the agent actually STARTS: interactive `claude`
+    // loads CLAUDE.md as context but won't act until prompted, so a bare launch
+    // sits idle and never registers (peers stays 0/2). The kickoff makes it run
+    // its CLAUDE.md loop immediately. JSON.stringify gives a shell-safe quoted arg.
+    const flags = mode.flag ? ` --permission-mode ${mode.flag}` : "";
+    sendText(`claude${flags} ${JSON.stringify(KICKOFF)}\r`);
   };
 
   return (

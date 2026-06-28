@@ -3,13 +3,12 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
 import {
   attachSseRelay,
-  createSessionDescriptor,
   type SessionDescriptor,
   type SseRelayTransport,
 } from "@particle-academy/agent-integrations/sharing";
 import { createWhisperServer } from "@/lib/mcp/createWhisperServer";
 import { WhisperStore } from "@/lib/mcp/whisperState";
-import { buildAgentRelayUrl, registerSession, relayBaseUrl } from "@/lib/session";
+import { buildAgentRelayUrl, getStableSessionDescriptor, registerSession, relayBaseUrl } from "@/lib/session";
 import { ThemeProvider } from "@/lib/theme/ThemeProvider";
 import { AgentPanel } from "./AgentPanel";
 import { ShortcutsProvider } from "./CommandCenter";
@@ -47,7 +46,7 @@ export function WhisperChat() {
       const urls: Record<string, string> = {};
 
       for (const agent of AGENTS) {
-        const descriptor = createSessionDescriptor();
+        const descriptor = getStableSessionDescriptor(agent.id);
         descriptors[agent.id] = descriptor;
         urls[agent.id] = buildAgentRelayUrl(descriptor);
         await registerSession(descriptor);
