@@ -95,5 +95,8 @@ export function useTerminalSocket(termId: string) {
 
   const clear = useCallback(() => terminalRef.current?.clear(), []);
 
-  return { setTerminalRef, onData, onResize, sendText, clear, status };
+  /** The terminal's visible buffer as text (for terminal_read / bridges). */
+  const getBuffer = useCallback(() => terminalRef.current?.getBuffer() ?? "", []);
+
+  return { setTerminalRef, onData, onResize, sendText, getBuffer, clear, status };
 }

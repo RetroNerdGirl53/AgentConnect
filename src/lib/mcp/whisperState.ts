@@ -37,6 +37,13 @@ export class WhisperStore {
   private inboxes = new Map<string, WhisperMessage[]>();
   /** Resolvers parked by whisper_wait, keyed by recipient id (FIFO). */
   private waiters = new Map<string, Array<() => void>>();
+  /**
+   * Push delivery: a per-recipient sink that hands a message straight to that
+   * agent (we wire it to writing into the agent's terminal). When a recipient
+   * has a deliverer, send() PUSHES to it instead of queuing — so the agent never
+   * has to poll/whisper_wait. Without one, messages queue as before (fallback).
+   */
+  private deliverers = new Map<string, (msg: WhisperMessage) => void>();
   transcript: TranscriptEntry[] = [];
   private seq = 0;
 
@@ -63,7 +70,11 @@ export class WhisperStore {
     return this.inboxes.get(id)?.length ?? 0;
   }
 
-  /** Queue a message for the recipient. Returns the created message. */
+  /**
+   * Send a message to a recipient. If the recipient has a registered deliverer,
+   * the message is PUSHED to it immediately (no queue, no polling); otherwise it
+   * is queued for whisper_poll/whisper_wait (fallback). Returns the message.
+   */
   send(from: string, to: string, body: string, correlationId?: string): WhisperMessage {
     const msg: WhisperMessage = {
       id: this.nextId("msg"),
@@ -73,14 +84,45 @@ export class WhisperStore {
       correlationId,
       ts: Date.now(),
     };
-    const box = this.inboxes.get(to) ?? [];
-    box.push(msg);
-    this.inboxes.set(to, box);
     this.pushTranscript({ ...msg, kind: "send" });
     const peer = this.peers.get(from);
     if (peer) peer.lastSeen = Date.now();
-    this.wakeWaiter(to);
+
+    const deliver = this.deliverers.get(to);
+    if (deliver) {
+      // Push path: hand it straight to the recipient (their terminal).
+      this.pushTranscript({ ...msg, kind: "deliver" });
+      deliver(msg);
+    } else {
+      // Fallback path: queue until the recipient polls / waits.
+      const box = this.inboxes.get(to) ?? [];
+      box.push(msg);
+      this.inboxes.set(to, box);
+      this.wakeWaiter(to);
+    }
     return msg;
+  }
+
+  /**
+   * Register (or clear, with null) the push sink for a recipient. On register we
+   * immediately drain anything already queued for them, so messages that arrived
+   * before their terminal was ready still get delivered.
+   */
+  setDeliverer(id: string, fn: ((msg: WhisperMessage) => void) | null): void {
+    if (!fn) {
+      this.deliverers.delete(id);
+      return;
+    }
+    this.deliverers.set(id, fn);
+    const box = this.inboxes.get(id);
+    if (box && box.length > 0) {
+      const taken = box.splice(0);
+      this.inboxes.set(id, box);
+      for (const m of taken) {
+        this.pushTranscript({ ...m, kind: "deliver" });
+        fn(m);
+      }
+    }
   }
 
   /**

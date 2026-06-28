@@ -51,10 +51,28 @@ export async function POST(req: Request) {
     await writeFile(file, JSON.stringify(config, null, 2) + "\n", "utf8");
     written.push(file);
 
-    // Pre-approve the project MCP server so `claude` doesn't prompt to trust it.
+    // Pre-approve the project MCP server AND auto-allow the whisper tools so the
+    // agent runs autonomously: without this, every whisper_register/whisper_send
+    // stops at a "Do you want to proceed?" prompt in default permission mode and
+    // the agent never gets going (peers stays 0/2). These are the app's own safe
+    // messaging tools; `Bash(date:*)` lets the agent read the time of day for its
+    // greeting without a prompt. (App-file edits are still blocked by the
+    // PreToolUse guard hook regardless.)
     const claudeDir = path.join(dir, ".claude");
     await mkdir(claudeDir, { recursive: true });
-    const settings = { enabledMcpjsonServers: ["whisper-chat"] };
+    const settings = {
+      enabledMcpjsonServers: ["whisper-chat"],
+      permissions: {
+        allow: [
+          "mcp__whisper-chat__whisper_register",
+          "mcp__whisper-chat__whisper_send",
+          "mcp__whisper-chat__whisper_poll",
+          "mcp__whisper-chat__whisper_wait",
+          "mcp__whisper-chat__whisper_peers",
+          "Bash(date:*)",
+        ],
+      },
+    };
     const settingsFile = path.join(claudeDir, "settings.local.json");
     await writeFile(settingsFile, JSON.stringify(settings, null, 2) + "\n", "utf8");
     written.push(settingsFile);

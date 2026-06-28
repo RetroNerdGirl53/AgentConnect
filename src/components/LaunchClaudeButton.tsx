@@ -50,7 +50,9 @@ export function LaunchClaudeButton({ sendText }: { sendText: (text: string) => v
     // Pass an initial prompt so the agent actually STARTS: interactive `claude`
     // loads CLAUDE.md as context but won't act until prompted, so a bare launch
     // sits idle and never registers (peers stays 0/2). The kickoff makes it run
-    // its CLAUDE.md loop immediately. JSON.stringify gives a shell-safe quoted arg.
+    // its CLAUDE.md loop immediately. JSON.stringify double-quotes the arg; this is
+    // safe only because KICKOFF is a fixed literal with no shell metacharacters
+    // ($, `, \). If KICKOFF ever gains those, switch to single-quote escaping.
     const flags = mode.flag ? ` --permission-mode ${mode.flag}` : "";
     sendText(`claude${flags} ${JSON.stringify(KICKOFF)}\r`);
   };

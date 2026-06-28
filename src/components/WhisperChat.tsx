@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import {
   attachSseRelay,
   type SessionDescriptor,
   type SseRelayTransport,
 } from "@particle-academy/agent-integrations/sharing";
+import { registerTerminalBridge } from "@particle-academy/agent-integrations/bridges/terminal";
 import { createWhisperServer } from "@/lib/mcp/createWhisperServer";
 import { WhisperStore } from "@/lib/mcp/whisperState";
 import { buildAgentRelayUrl, getStableSessionDescriptor, registerSession, relayBaseUrl } from "@/lib/session";
@@ -22,6 +23,16 @@ const AGENTS: Agent[] = [
   { id: "agent-b", termId: "term-b", dir: "agent-b", label: "Agent B · Coder" },
 ];
 
+/** Live handle to one agent's terminal, populated by its AgentPanel. */
+type TerminalApi = { write: (data: string) => void; getBuffer?: () => string };
+
+/** Render a delivered whisper as one line of agent input, tagged so the receiver
+ *  knows it's from a peer agent — not the human operator. */
+function formatInject(msg: { from: string; body: string }): string {
+  const oneLine = msg.body.replace(/\r?\n+/g, " / ").trim();
+  return `[whisper from ${msg.from}] ${oneLine}\r`;
+}
+
 export function WhisperChat() {
   // Stable single instance; its internals mutate and we re-render via bump().
   const [store] = useState(() => new WhisperStore());
@@ -32,11 +43,34 @@ export function WhisperChat() {
   const [relayReady, setRelayReady] = useState(false);
   const [agentUrls, setAgentUrls] = useState<Record<string, string>>({});
 
+  // Live terminal handles, keyed by agent id; each AgentPanel registers its own.
+  // The push deliverer + the terminal bridge both write through these.
+  const terminalsRef = useRef<Record<string, TerminalApi>>({});
+  const registerTerminal = useCallback((id: string, api: TerminalApi | null) => {
+    if (api) terminalsRef.current[id] = api;
+    else delete terminalsRef.current[id];
+  }, []);
+
   useEffect(() => {
     // No ref-guard here: React StrictMode (dev) intentionally mounts twice.
     // The `cancelled` flag aborts the first, partially-completed run during
     // its cleanup so only the live mount ends up with attached transports.
     const server = createWhisperServer(store, () => bump());
+
+    // In-spec push delivery: the kit's terminal bridge wraps each terminal's
+    // input write (so it broadcasts AgentActivity), and the whisper store
+    // delivers messages through these same handles. `write` is wired to the
+    // PTY-input channel so it feeds the agent's stdin (not just the display).
+    registerTerminalBridge(server, {
+      terminals: () =>
+        AGENTS.map((a) => ({
+          id: a.id,
+          label: a.label,
+          getBuffer: () => terminalsRef.current[a.id]?.getBuffer?.() ?? "",
+          write: (data: string) => terminalsRef.current[a.id]?.write?.(data),
+        })),
+    });
+
     const transports: SseRelayTransport[] = [];
     let cancelled = false;
 
@@ -94,6 +128,32 @@ export function WhisperChat() {
 
   const peers = store.listPeers();
   const peerIds = new Set(peers.map((p) => p.id));
+  // Stable signal of which agents are online (registered) — drives the effect below.
+  const onlineKey = AGENTS.map((a) => (peerIds.has(a.id) ? a.id : "-")).join(",");
+
+  // Push delivery: register a deliverer for each ONLINE agent so the store pushes
+  // straight into its terminal (no whisper_wait polling). Gated on online so we
+  // never inject into a shell where claude isn't running yet; messages for an
+  // offline agent queue and drain the moment it registers (setDeliverer drains).
+  useEffect(() => {
+    const online = new Set(store.listPeers().map((p) => p.id));
+    for (const a of AGENTS) {
+      if (online.has(a.id)) {
+        store.setDeliverer(a.id, (msg) => {
+          const w = terminalsRef.current[a.id]?.write;
+          if (!w) return;
+          w(formatInject(msg)); // tagged line + Enter
+          // Submit nudge: if the recipient was mid-turn when this landed, the
+          // Enter can buffer without submitting. A follow-up Enter once it's idle
+          // flushes it; an empty Enter at the prompt is a no-op, so this is safe.
+          setTimeout(() => terminalsRef.current[a.id]?.write?.("\r"), 3000);
+        });
+      } else {
+        store.setDeliverer(a.id, null);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store, onlineKey]);
 
   return (
     <ThemeProvider>
@@ -118,6 +178,7 @@ export function WhisperChat() {
                 label={a.label}
                 cwd={`agents/${a.dir}`}
                 online={peerIds.has(a.id)}
+                registerTerminal={registerTerminal}
               />
             ))}
           </main>

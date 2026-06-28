@@ -10,12 +10,10 @@
  */
 import test from "node:test";
 import assert from "node:assert/strict";
-
-// Stub the browser globals the module reads at call time (not import time).
-const ORIGIN = "http://192.168.1.104:3000";
-(globalThis as any).window = { location: { origin: ORIGIN } };
-
-const { relayBaseUrl, buildAgentRelayUrl, registerSession, RELAY_PATH } = await import("../../src/lib/session");
+// Side-effect import: stubs `window` before src/lib/session (and its sharing
+// dependency) is evaluated. Must precede the module-under-test import below.
+import { TEST_ORIGIN as ORIGIN } from "./_setup-window";
+import { relayBaseUrl, buildAgentRelayUrl, registerSession, RELAY_PATH } from "../../src/lib/session";
 
 test("RELAY_PATH is the same-origin relay mount point", () => {
   assert.equal(RELAY_PATH, "/relay");
@@ -53,15 +51,27 @@ test("registerSession POSTs the descriptor to /relay/register", async () => {
   assert.deepEqual(JSON.parse(calls[0].init.body), { session: "sess-9", token: "tok-9" });
 });
 
-test("registerSession throws with status + detail when the relay rejects", async () => {
+test("registerSession tolerates a non-OK relay response (warns, does not throw)", async () => {
+  // Idempotent re-register on reload must not wedge setup, so a non-OK response
+  // is warned-and-continued, not thrown.
   (globalThis as any).fetch = async () => ({
     ok: false,
     status: 401,
     text: async () => "invalid_token",
   });
 
-  await assert.rejects(
-    () => registerSession({ id: "sess-9", token: "bad" } as any),
-    /relay register failed \(401\): invalid_token/,
-  );
+  const warnings: string[] = [];
+  const origWarn = console.warn;
+  console.warn = (...a: unknown[]) => {
+    warnings.push(a.map(String).join(" "));
+  };
+  try {
+    await registerSession({ id: "sess-9", token: "bad" } as any); // resolves, no throw
+  } finally {
+    console.warn = origWarn;
+  }
+
+  assert.equal(warnings.length, 1, "a non-OK register should emit one warning");
+  assert.match(warnings[0], /401/);
+  assert.match(warnings[0], /invalid_token/);
 });
